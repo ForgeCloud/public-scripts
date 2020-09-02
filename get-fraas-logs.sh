@@ -65,7 +65,7 @@ if [ $status -ne 0 ]; then
 fi
 echo "done!"
 
-if [ "${GOOS}" = "darwin" ]; then
+if [[ $EUID -eq 0 ]] || [[ "${GOOS}" = "darwin" ]]; then
 	echo "Moving fraas-logs to ${INSTALL_PATH}"
 	chmod +x /tmp/${FRAAS_LOGS_BINARY} && mv /tmp/${FRAAS_LOGS_BINARY} ${INSTALL_PATH}
 	status=$?
@@ -73,7 +73,7 @@ if [ "${GOOS}" = "darwin" ]; then
 		echo "Error installing fraas-logs"
 		exit $status
 	fi
-else
+elif [[ -x "$(command -v sudo)" ]]; then
 	echo "Moving fraas-logs to ${INSTALL_PATH} using sudo"
 	chmod +x /tmp/${FRAAS_LOGS_BINARY} && sudo mv /tmp/${FRAAS_LOGS_BINARY} ${INSTALL_PATH}
 	status=$?
@@ -81,6 +81,9 @@ else
 		echo "Error installing fraas-logs"
 		exit $status
 	fi
+else
+	echo "Failed to install: please try running script as root"
+	exit 1
 fi
 
 echo "Installed fraas-logs version ${LATEST_VER} at ${INSTALL_PATH}. Happy logging!"

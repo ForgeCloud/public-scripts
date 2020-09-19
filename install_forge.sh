@@ -14,41 +14,31 @@
 #
 set -e
 
+ARTIFACTORY_URL="https://maven.forgerock.org"
+AUTH="X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}"
 FRAAS_CONFIG_PATH=${FRAAS_CONFIG_PATH:-"${HOME}/.fraas"}
 INSTALL_PATH=${INSTALL_PATH:-"/usr/local/bin/forge"}
+REPO_URL="${ARTIFACTORY_URL}/repo/fraas-generic/forge"
 VERIFY_INSTALL=${VERIFY_INSTALL:-"yes"}
 
-ARTIFACTORY_URL="https://maven.forgerock.org"
-REPO_NAME="fraas-generic"
-REPO_PATH="forge"
-REPO_URL="${ARTIFACTORY_URL}/repo/${REPO_NAME}/${REPO_PATH}"
+if [[ -f "${FRAAS_CONFIG_PATH}" ]]; then
+  source "${FRAAS_CONFIG_PATH}"
+fi
 
 BLUE=$(printf '\033[34m')
 RED=$(printf '\033[31m')
 YELLOW=$(printf '\033[33m')
 RESET=$(printf '\033[m')
-
-info() {
-  echo "🤓 ${BLUE}$*${RESET}"
-}
-
-warning() {
-  echo "🔔 ${YELLOW}$*${RESET}" >&2
-}
-
-error() {
-  echo "😭 ${RED}$*${RESET}" >&2
-}
+info() { echo "🤓 ${BLUE}$*${RESET}"; }
+warning() { echo "🔔 ${YELLOW}$*${RESET}" >&2; }
+error() { echo "😭 ${RED}$*${RESET}" >&2; }
 
 echo "🎉 Welcome to Forge CLI 🎉"
 
 case "$(uname -s)" in
   Linux) OS="linux" ;;
   Darwin) OS="mac" ;;
-  *)
-    error "Unsupported OS"
-    exit 1
-    ;;
+  *) error "Unsupported OS"; exit 1 ;;
 esac
 
 if ! command -v curl >/dev/null 2>&1; then
@@ -56,8 +46,9 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ -f "${FRAAS_CONFIG_PATH}" ]]; then
-  source "${FRAAS_CONFIG_PATH}"
+# Append a default binary name if a directory was specified
+if [[ -d "${INSTALL_PATH}" ]]; then
+  INSTALL_PATH="${INSTALL_PATH}/forge"
 fi
 
 if [[ -z "${ARTIFACTORY_API_KEY}" ]]; then
@@ -76,8 +67,6 @@ Steps to Fix:
 EOF
   exit 1
 fi
-
-AUTH="X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}"
 
 # Grab the latest version if not specified
 if [[ -z "${FORGE_VERSION}" ]]; then

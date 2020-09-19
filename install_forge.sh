@@ -7,19 +7,16 @@
 #
 # Optional Vars (the defaults will work for most):
 # • ARTIFACTORY_API_KEY : API key for Artifactory auth
-# • FORGE_VERSION       : Version to install (i.e, 2.1.0, 2.1.*, 2.*, *)
+# • FORGE_VERSION       : Version to install
 # • FRAAS_CONFIG_PATH   : Path to the FRaaS config file
 # • INSTALL_PATH        : Path to save Forge to
-#
-# Pass "-y" or "--yes" to skip user prompts:
-#   bash forge_intall.sh -y
+# • VERIFY_INSTALL      : "yes" to verify before install, "no" to skip
 #
 set -e
 
-FORGE_VERSION=${FORGE_VERSION:-"*"}
 FRAAS_CONFIG_PATH=${FRAAS_CONFIG_PATH:-"${HOME}/.fraas"}
 INSTALL_PATH=${INSTALL_PATH:-"/usr/local/bin/forge"}
-VERIFY_INSTALL="yes"
+VERIFY_INSTALL=${VERIFY_INSTALL:-"yes"}
 
 ARTIFACTORY_URL="https://maven.forgerock.org"
 REPO_NAME="fraas-generic"
@@ -45,22 +42,6 @@ error() {
 
 echo "🎉 Welcome to Forge CLI 🎉"
 
-# Parse arguments
-while [[ "$#" -gt 0 ]]; do
-  case "${1}" in
-    -y|--yes) VERIFY_INSTALL="no" ;;
-    *)
-      error "Unknown argument: ${1}"
-      exit 1
-      ;;
-  esac
-  shift
-done
-
-if [[ -f "${FRAAS_CONFIG_PATH}" ]]; then
-  source "${FRAAS_CONFIG_PATH}"
-fi
-
 case "$(uname -s)" in
   Linux) OS="linux" ;;
   Darwin) OS="mac" ;;
@@ -75,31 +56,8 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
-# Avoid confusion when installing the latest binary
-DISPLAY_VERSION="latest"
-if [[ "${FORGE_VERSION}" != "*" ]]; then
-  DISPLAY_VERSION="${FORGE_VERSION}"
-fi
-
-cat << EOF
---- Forge Config ---
-• Install Path : ${BLUE}${INSTALL_PATH}${RESET}
-• OS           : ${BLUE}${OS}${RESET}
-• Version      : ${BLUE}${DISPLAY_VERSION}${RESET}
---------------------
-EOF
-
-if [[ -f "${INSTALL_PATH}" ]]; then
-  warning "The existing install will be replaced"
-fi
-
-if [[ "${VERIFY_INSTALL}" == "yes" ]]; then
-  echo -n "🤩 Continue install? [y/N]: "
-  read CONTINUE_YESNO
-  if [[ "${CONTINUE_YESNO}" != "y" && "${CONTINUE_YESNO}" != "Y" ]]; then
-    echo "😭 Forge was not installed"
-    exit 0
-  fi
+if [[ -f "${FRAAS_CONFIG_PATH}" ]]; then
+  source "${FRAAS_CONFIG_PATH}"
 fi
 
 if [[ -z "${ARTIFACTORY_API_KEY}" ]]; then
@@ -119,40 +77,40 @@ EOF
   exit 1
 fi
 
-info "Searching for the Forge binary..."
+AUTH="X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}"
 
-QUERY_VERSION="forge-${FORGE_VERSION}-${OS}"
-AQL_QUERY=$(cat << EOF
-items.find({"\$and":[
-  {"repo":{"\$match":"${REPO_NAME}"}},
-  {"path":{"\$match":"${REPO_PATH}"}},
-  {"name":{"\$match":"${QUERY_VERSION}"}}
-]})
-.sort({"\$desc": ["name"]})
-.limit(1)
-EOF
-)
-
-QUERY_RESULT=$(curl -fsSL -X POST "${ARTIFACTORY_URL}/repo/api/search/aql" \
-  -H "X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}" \
-  -H "Content-Type: text/plain" \
-  -d "${AQL_QUERY}")
-
-# Using sed to avoid requiring a json parser to install Forge
-FORGE_BINARY=$(echo "${QUERY_RESULT}" | sed -n 's/.*"name" : "\(.*\)",/\1/p')
-
-if [[ -z "${FORGE_BINARY}" ]]; then
-  error "Could not find the Forge version specified"
-  error "Verify the binary is available at ${REPO_URL}"
-  exit 1
+# Grab the latest version if not specified
+if [[ -z "${FORGE_VERSION}" ]]; then
+  info "FORGE_VERSION not specified, finding the latest version..."
+  FORGE_VERSION=$(curl -fsSL -H "${AUTH}" "${REPO_URL}/latest")
 fi
+
+cat << EOF
+--- Forge Config ---
+• Install Path : ${BLUE}${INSTALL_PATH}${RESET}
+• OS           : ${BLUE}${OS}${RESET}
+• Version      : ${BLUE}${FORGE_VERSION}${RESET}
+--------------------
+EOF
+
+if [[ -f "${INSTALL_PATH}" ]]; then
+  warning "The existing install will be replaced"
+fi
+
+if [[ "${VERIFY_INSTALL}" == "yes" ]]; then
+  echo -n "🤩 Continue install? [y/N]: "
+  read CONTINUE_YESNO
+  if [[ "${CONTINUE_YESNO}" != "y" && "${CONTINUE_YESNO}" != "Y" ]]; then
+    echo "😭 Forge was not installed"
+    exit 0
+  fi
+fi
+
+FORGE_BINARY="forge-${FORGE_VERSION}-${OS}"
 
 info "Installing ${FORGE_BINARY}..."
 
-curl -fsSL "${REPO_URL}/${FORGE_BINARY}" \
-  -H "X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}" \
-  -o "${INSTALL_PATH}"
-
+curl -fsSL -H "${AUTH}" -o "${INSTALL_PATH}" "${REPO_URL}/${FORGE_BINARY}"
 chmod +x "${INSTALL_PATH}"
 
 cat << EOF

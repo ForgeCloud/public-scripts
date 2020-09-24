@@ -15,7 +15,6 @@
 set -e
 
 ARTIFACTORY_URL="https://maven.forgerock.org"
-AUTH="X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}"
 FRAAS_CONFIG_PATH=${FRAAS_CONFIG_PATH:-"${HOME}/.fraas"}
 INSTALL_PATH=${INSTALL_PATH:-"/usr/local/bin/forge"}
 REPO_URL="${ARTIFACTORY_URL}/repo/fraas-generic/forge"
@@ -67,6 +66,8 @@ Steps to Fix:
 EOF
   exit 1
 fi
+
+AUTH="X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}"
 
 # Grab the latest version if not specified
 if [[ -z "${FORGE_VERSION}" ]]; then

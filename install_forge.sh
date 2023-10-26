@@ -17,7 +17,7 @@ set -e
 ARTIFACTORY_URL="https://maven.forgerock.org"
 FRAAS_CONFIG_PATH=${FRAAS_CONFIG_PATH:-"${HOME}/.fraas"}
 INSTALL_PATH=${INSTALL_PATH:-"/usr/local/bin/forge"}
-REPO_URL="${ARTIFACTORY_URL}/repo/fraas-generic/forge"
+REPO_URL="${ARTIFACTORY_URL}/artifactory/fraas-generic/forge"
 VERIFY_INSTALL=${VERIFY_INSTALL:-"yes"}
 
 if [[ -f "${FRAAS_CONFIG_PATH}" ]]; then

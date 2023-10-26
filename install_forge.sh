@@ -118,7 +118,7 @@ ${RESET}
 🎉 Install Successful! 🎉
 
 ❤️ Forge is your tool! ❤️
-Ideas/Suggestions? 👉 Slack ${YELLOW}#fraas-devx${RESET}
+Ideas/Suggestions? 👉 Slack ${YELLOW}#fraas-team-devx${RESET}
 
 Next Steps:
 • Run ${BLUE}"forge doctor"${RESET} and follow the hints

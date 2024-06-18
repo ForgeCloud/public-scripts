@@ -6,23 +6,12 @@
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/ForgeCloud/public-scripts/master/install_forge.sh)"
 #
 # Optional Vars (the defaults will work for most):
-# • ARTIFACTORY_API_KEY : API key for Artifactory auth
 # • FORGE_VERSION       : Version to install
 # • FRAAS_CONFIG_PATH   : Path to the FRaaS config file
 # • INSTALL_PATH        : Path to save Forge to
 # • VERIFY_INSTALL      : "yes" to verify before install, "no" to skip
 #
 set -e
-
-ARTIFACTORY_URL="https://maven.forgerock.org"
-FRAAS_CONFIG_PATH=${FRAAS_CONFIG_PATH:-"${HOME}/.fraas"}
-INSTALL_PATH=${INSTALL_PATH:-"/usr/local/bin/forge"}
-REPO_URL="${ARTIFACTORY_URL}/artifactory/fraas-generic/forge"
-VERIFY_INSTALL=${VERIFY_INSTALL:-"yes"}
-
-if [[ -f "${FRAAS_CONFIG_PATH}" ]]; then
-  source "${FRAAS_CONFIG_PATH}"
-fi
 
 BLUE=$(printf '\033[34m')
 RED=$(printf '\033[31m')
@@ -31,6 +20,38 @@ RESET=$(printf '\033[m')
 info() { echo "🤓 ${BLUE}$*${RESET}"; }
 warning() { echo "🔔 ${YELLOW}$*${RESET}" >&2; }
 error() { echo "😭 ${RED}$*${RESET}" >&2; }
+err_missing_artifactory_key() {
+  error "ARTIFACTORY_API_KEY not defined"
+  cat << EOF
+Steps to Fix:
+• Create an Artifactory account:
+  ${BLUE}Log into ${ARTIFACTORY_URL} using Backstage${RESET}
+• Open the profile page:
+  ${BLUE}Go to ${ARTIFACTORY_URL}/repo/webapp/#/profile${RESET}
+• Generate an API Key:
+  ${BLUE}Enter password, click "Unlock", click "Generate"/"Regenerate"${RESET}
+• call this script with:
+    ARTIFACTORY_API_KEY=""${YELLOW}<API_KEY>${RESET}" bash -c "$(curl -fsSL https://raw.githubusercontent.com/ForgeCloud/public-scripts/master/install_forge.sh)"
+EOF
+}
+
+ARTIFACTORY_URL="https://maven.forgerock.org"
+FRAAS_CONFIG_PATH=${FRAAS_CONFIG_PATH:-"${HOME}/.fraas"}
+INSTALL_PATH=${INSTALL_PATH:-"/usr/local/bin/forge"}
+REPO_URL="${ARTIFACTORY_URL}/artifactory/fraas-generic/forge"
+VERIFY_INSTALL=${VERIFY_INSTALL:-"yes"}
+
+if ! [[ -f "${FRAAS_CONFIG_PATH}" ]]; then
+  # FRAAS_CONFIG_PATH not found, try to build with ARTIFACTORY_API_KEY envar"
+  echo "ARTIFACTORY_API_KEY=${ARTIFACTORY_API_KEY}" >> "${FRAAS_CONFIG_PATH}"
+fi
+
+source "${FRAAS_CONFIG_PATH}"
+if [[ -z "${ARTIFACTORY_API_KEY}" ]]; then
+  err_missing_artifactory_key
+  # ARTIFACTORY_API_KEY is not an option
+  exit 1
+fi
 
 echo "🎉 Welcome to Forge CLI 🎉"
 
@@ -48,23 +69,6 @@ fi
 # Append a default binary name if a directory was specified
 if [[ -d "${INSTALL_PATH}" ]]; then
   INSTALL_PATH="${INSTALL_PATH}/forge"
-fi
-
-if [[ -z "${ARTIFACTORY_API_KEY}" ]]; then
-  error "ARTIFACTORY_API_KEY not defined"
-  cat << EOF
-Steps to Fix:
-• Create an Artifactory account:
-  ${BLUE}Log into ${ARTIFACTORY_URL} using Backstage${RESET}
-• Open the profile page:
-  ${BLUE}Go to ${ARTIFACTORY_URL}/repo/webapp/#/profile${RESET}
-• Generate an API Key:
-  ${BLUE}Enter password, click "Unlock", click "Generate"/"Regenerate"${RESET}
-• Save the API key to your machine:
-  ${BLUE}echo ARTIFACTORY_API_KEY="${YELLOW}<API_KEY>${BLUE}" \
-  >> ${FRAAS_CONFIG_PATH}${RESET}
-EOF
-  exit 1
 fi
 
 AUTH="X-JFrog-Art-Api:${ARTIFACTORY_API_KEY}"

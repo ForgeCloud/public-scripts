@@ -30,7 +30,8 @@ Steps to Fix:
   ${BLUE}Go to ${ARTIFACTORY_URL}/repo/webapp/#/profile${RESET}
 • Generate an API Key:
   ${BLUE}Enter password, click "Unlock", click "Generate"/"Regenerate"${RESET}
-• call this script again with ARTIFACTORY_API_KEY="${YELLOW}<API_KEY>${RESET}"
+• call this script with:
+    ARTIFACTORY_API_KEY=""${YELLOW}<API_KEY>${RESET}" bash -c "$(curl -fsSL https://raw.githubusercontent.com/ForgeCloud/public-scripts/master/install_forge.sh)"
 EOF
 }
 

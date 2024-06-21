@@ -21,6 +21,7 @@ info() { echo "🤓 ${BLUE}$*${RESET}"; }
 warning() { echo "🔔 ${YELLOW}$*${RESET}" >&2; }
 error() { echo "😭 ${RED}$*${RESET}" >&2; }
 err_missing_artifactory_key() {
+  rm ${FRAAS_CONFIG_PATH}
   error "ARTIFACTORY_API_KEY not defined"
   cat << EOF
 Steps to Fix:

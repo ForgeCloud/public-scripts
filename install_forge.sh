@@ -21,6 +21,7 @@ info() { echo "🤓 ${BLUE}$*${RESET}"; }
 warning() { echo "🔔 ${YELLOW}$*${RESET}" >&2; }
 error() { echo "😭 ${RED}$*${RESET}" >&2; }
 err_missing_artifactory_key() {
+  rm ${FRAAS_CONFIG_PATH}
   error "ARTIFACTORY_API_KEY not defined"
   cat << EOF
 Steps to Fix:
@@ -31,7 +32,7 @@ Steps to Fix:
 • Generate an API Key:
   ${BLUE}Enter password, click "Unlock", click "Generate"/"Regenerate"${RESET}
 • call this script with:
-    ARTIFACTORY_API_KEY=""${YELLOW}<API_KEY>${RESET}" bash -c "$(curl -fsSL https://raw.githubusercontent.com/ForgeCloud/public-scripts/master/install_forge.sh)"
+    ARTIFACTORY_API_KEY="${YELLOW}<API_KEY>${RESET}" bash -c "\$(curl -fsSL https://raw.githubusercontent.com/ForgeCloud/public-scripts/master/install_forge.sh)"
 EOF
 }
 
@@ -104,8 +105,8 @@ FORGE_BINARY="forge-${FORGE_VERSION}-${OS}"
 
 info "Installing ${FORGE_BINARY}..."
 
-curl -fL -# -H "${AUTH}" -o "${INSTALL_PATH}" "${REPO_URL}/${FORGE_BINARY}"
-chmod +x "${INSTALL_PATH}"
+sudo curl -fL -# -H "${AUTH}" -o "${INSTALL_PATH}" "${REPO_URL}/${FORGE_BINARY}"
+sudo chmod +x "${INSTALL_PATH}"
 
 cat << EOF
 ${BLUE}

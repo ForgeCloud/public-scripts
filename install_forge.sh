@@ -105,8 +105,8 @@ FORGE_BINARY="forge-${FORGE_VERSION}-${OS}"
 
 info "Installing ${FORGE_BINARY}..."
 
-sudo curl -fL -# -H "${AUTH}" -o "${INSTALL_PATH}" "${REPO_URL}/${FORGE_BINARY}"
-sudo chmod +x "${INSTALL_PATH}"
+curl -fL -# -H "${AUTH}" -o "${INSTALL_PATH}" "${REPO_URL}/${FORGE_BINARY}"
+chmod +x "${INSTALL_PATH}"
 
 cat << EOF
 ${BLUE}

@@ -6,9 +6,7 @@ Please be cautious of what you commit.
 Install forge
 -------------
 
-```
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/ForgeCloud/public-scripts/master/install_forge.sh)"
-```
+see [docs on how-to Install Forge](https://docs.forgeblocks.com/how-tos/install-forge/index.html)
 
 Install fraas-logs
 ------------------
